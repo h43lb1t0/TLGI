@@ -4,5 +4,5 @@ A simple base converter that can handle conversions between various numeral syst
 To use the base converter, run the script with the following command:
 
 ```bash
-python BasenWechsler.py
+python NumberBaseChangeCalculator.py
 ```
