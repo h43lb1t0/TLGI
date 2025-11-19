@@ -1,5 +1,17 @@
+from decimal import getcontext
+import decimal
+import math
+
+
 def hex_letter_to_number(number: str) -> int:
-    """Converts a hexadecimal letter (A-F) to its numberical equivalent (10-15)."""
+    """Converts a hexadecimal letter (A-F) to its numberical equivalent (0-15).
+    
+    Args:
+        number (str): The hexadecimal letter to convert.
+
+    Returns:
+        int: The numerical value of the hexadecimal letter.
+    """
     hex_mapping = {
         'A': 10,
         'B': 11,
@@ -15,7 +27,13 @@ def hex_letter_to_number(number: str) -> int:
         return int(number)
 
 def number_to_hex_letter(num: int) -> str:
-    """Converts a numberical value (10-15) to its hexadecimal letter equivalent (A-F)."""
+    """Converts a numberical value (10-15) to its hexadecimal letter equivalent (A-F).
+    
+    Args:
+        num (int): The number to convert (0-15).
+        Returns:
+        str: The hexadecimal letter if num is between 10-15, else the string of the number.
+    """
     number_mapping = {
         10: 'A',
         11: 'B',
@@ -26,9 +44,72 @@ def number_to_hex_letter(num: int) -> str:
     }
     return number_mapping.get(num, str(num))
 
+def _neded_precision_in_base(frac: int, base: int, out_base: int) -> int:
+    """
+    Calculates how many digits are needed in the fraction part when converting from one base to another.
+    Args:
+        frac (int): The fraction part in the original base (e.g., for 0.75, pass 75).
+        base (int): The original base.
+        out_base (int): The target base.
+    Returns:
+        int: The number of digits needed in the fraction part in the target base.
+    """
+
+    print("Calculating how many bits are needed for the fraction part")
+    r = math.ceil(len(str(frac)) * (math.log(base)/math.log(out_base)))
+    print(f"{len(str(frac))} * (ln({base})/ln({out_base})) = {r}")
+    return r
+
+def _fraction_part_decimal_to_n_base(fraction_part: int, base: int) -> str:
+    """
+    Converts the fraction part of a number in the decimal base into a fraction in the goal base.
+
+    Args:
+        fraction_part (int): The fraction part in decimal (e.g., for 0.75, pass 75).
+        base (int): The target base to convert to.
+    Returns:
+        str: The fraction part in the target base as a string.
+    """
+
+    p: int = _neded_precision_in_base(fraction_part, 10, base)
+
+
+    print(f"\n--- Converting 0.{fraction_part} (Base 10) to Base {base} ---")
+    result: str = ''
+
+    numerator: int = fraction_part
+    frac_str: str = str(fraction_part)
+    width: int = len(frac_str)
+    denominator: int = 10 ** len(frac_str)
+
+    while p > 0:
+
+        frac_print: str = f"0.{str(numerator).zfill(width)}"
+
+        product: int = numerator * base
+        intenager_part: int = product // denominator
+        numerator: int = product % denominator
+        product_float = f"{intenager_part}.{str(numerator).zfill(width)}"
+        print(f"{frac_print} * {base} = {product_float}")
+
+        result += number_to_hex_letter(intenager_part)
+
+        if numerator == 0:
+            break 
+        p -= 1
+    
+    return result
+
 
 def _to_decimal(num: str, base: int) -> int:
-    """Converts a number (represented as an int) from a given base to decimal."""
+    """Converts a number (represented as an int) from a given base to decimal.
+    
+    Args:
+        num (str): The number to convert, represented as a string.
+        base (int): The base of the input number.
+    Returns:
+        int: The decimal representation of the input number.
+    """
 
     original_num_for_print = num 
     result = 0
@@ -54,6 +135,12 @@ def change_base(number_as_string_with_base: str, out_base: int) -> str:
     """
     Changes a number from one base to another.
     The input string format is "number_base", e.g., "1101_2" or "77_8".
+
+    Args:
+        number_as_string_with_base (str): The number with its base as a string.
+        out_base (int): The target base to convert to.
+    Returns:
+        str: The converted number as a string in the target base.
     """
     if "_" not in number_as_string_with_base:
         number_as_string_with_base += "_10"
@@ -68,6 +155,9 @@ def change_base(number_as_string_with_base: str, out_base: int) -> str:
     if input_base == out_base:
         print("Input base equals output base. No conversion needed.")
         return number
+    
+    if "." in number:
+        number, fraction_part = number.split(".")
 
     if input_base == 10:
         print(f"\n--- Converting {number} (Base 10) to Base {out_base} ---")
@@ -92,6 +182,10 @@ def change_base(number_as_string_with_base: str, out_base: int) -> str:
         else:
             final_reults = mod_result
         final_result_str = ''.join(final_reults)
+
+        if fraction_part:
+            fraction_result = _fraction_part_decimal_to_n_base(int(fraction_part), out_base)
+            final_result_str = f"{final_result_str}.{fraction_result}"
         
         print(f"--- Final Base {out_base} Value: {final_result_str} ---\n")
         return final_result_str
