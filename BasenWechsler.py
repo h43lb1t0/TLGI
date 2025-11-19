@@ -101,29 +101,32 @@ def _fraction_part_decimal_to_n_base(fraction_part: int, base: int) -> str:
     return result
 
 
-def _to_decimal(num: str, base: int) -> int:
+def _to_decimal(num: str, base: int, fraction: bool = False) -> int:
     """Converts a number (represented as an int) from a given base to decimal.
     
     Args:
         num (str): The number to convert, represented as a string.
         base (int): The base of the input number.
+        fraction (bool): Whether the number is a fraction part. Defaults to False.
     Returns:
         int: The decimal representation of the input number.
     """
 
     original_num_for_print = num 
     result = 0
-    index = 0
+    index = 1 if fraction else 0
     
     print(f"\n--- 1. Converting {original_num_for_print} (Base {base}) to Decimal (Base 10) ---")
 
     digits_list = [hex_letter_to_number(d) for d in num]
-    digits_list.reverse()
-    
-    for digit in digits_list:
-        calculation = digit * (base ** index)
+    if not fraction:
+        digits_list.reverse()
 
-        print(f"{digit} * ({base} ^ {index}) ={digit} * {base ** index} = {calculation}")
+    for digit in digits_list:
+        index_calc = (( -1 * index) if fraction else index)
+        calculation = digit * (base ** index_calc)
+
+        print(f"{digit} * ({base} ^ {'-' if fraction else ''}{index}) ={digit} * {base ** index_calc} = {calculation}")
 
         result += calculation
 
@@ -156,8 +159,9 @@ def change_base(number_as_string_with_base: str, out_base: int) -> str:
         print("Input base equals output base. No conversion needed.")
         return number
     
-    if "." in number:
-        number, fraction_part = number.split(".")
+    number, *fraction_part = number.split(".")
+    if len(fraction_part) > 0:
+        fraction_part = fraction_part[0]
 
     if input_base == 10:
         print(f"\n--- Converting {number} (Base 10) to Base {out_base} ---")
@@ -169,7 +173,7 @@ def change_base(number_as_string_with_base: str, out_base: int) -> str:
             current_dividend_for_print = dr
             dr, mr = divmod(dr, out_base)
             
-            print(f"{current_dividend_for_print} // {out_base} = {dr}, Remainder: {mr}")
+            print(f"{current_dividend_for_print} : {out_base} = {dr}, Remainder: {mr}")
             
             mod_result.append(str(mr))
             
@@ -191,7 +195,11 @@ def change_base(number_as_string_with_base: str, out_base: int) -> str:
         return final_result_str
 
     elif out_base == 10:
-        return _to_decimal(number, input_base)
+        r = _to_decimal(number, input_base)
+        print(r)
+        if fraction_part:
+            r += _to_decimal(fraction_part, input_base, True)
+        return r
         
     else:
         print(f"\n--- Two-step conversion required: Base {input_base} -> Base 10 -> Base {out_base} ---")
