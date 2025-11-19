@@ -1,6 +1,5 @@
-from decimal import getcontext
-import decimal
 import math
+from typing import Union, List
 
 
 def hex_letter_to_number(number: str) -> int:
@@ -89,7 +88,7 @@ def _fraction_part_decimal_to_n_base(fraction_part: int, base: int) -> str:
         product: int = numerator * base
         intenager_part: int = product // denominator
         numerator: int = product % denominator
-        product_float = f"{intenager_part}.{str(numerator).zfill(width)}"
+        product_float: str = f"{intenager_part}.{str(numerator).zfill(width)}"
         print(f"{frac_print} * {base} = {product_float}")
 
         result += number_to_hex_letter(intenager_part)
@@ -101,7 +100,7 @@ def _fraction_part_decimal_to_n_base(fraction_part: int, base: int) -> str:
     return result
 
 
-def _to_decimal(num: str, base: int, fraction: bool = False) -> int:
+def _to_decimal(num: str, base: int, fraction: bool = False) -> Union[int, float]:
     """Converts a number (represented as an int) from a given base to decimal.
     
     Args:
@@ -112,19 +111,19 @@ def _to_decimal(num: str, base: int, fraction: bool = False) -> int:
         int: The decimal representation of the input number.
     """
 
-    original_num_for_print = num 
-    result = 0
+    original_num_for_print: str = num 
+    result: Union[int, float] = 0
     index = 1 if fraction else 0
     
     print(f"\n--- 1. Converting {original_num_for_print} (Base {base}) to Decimal (Base 10) ---")
 
-    digits_list = [hex_letter_to_number(d) for d in num]
+    digits_list: List[int] = [hex_letter_to_number(d) for d in num]
     if not fraction:
         digits_list.reverse()
 
     for digit in digits_list:
         index_calc = (( -1 * index) if fraction else index)
-        calculation = digit * (base ** index_calc)
+        calculation: Union[int, float] = digit * (base ** index_calc)
 
         print(f"{digit} * ({base} ^ {'-' if fraction else ''}{index}) ={digit} * {base ** index_calc} = {calculation}")
 
@@ -134,7 +133,7 @@ def _to_decimal(num: str, base: int, fraction: bool = False) -> int:
     return result
 
 
-def change_base(number_as_string_with_base: str, out_base: int) -> str:
+def change_base(number_as_string_with_base: str, out_base: int) -> Union[str, int, float]:
     """
     Changes a number from one base to another.
     The input string format is "number_base", e.g., "1101_2" or "77_8".
@@ -165,7 +164,7 @@ def change_base(number_as_string_with_base: str, out_base: int) -> str:
 
     if input_base == 10:
         print(f"\n--- Converting {number} (Base 10) to Base {out_base} ---")
-        mod_result = []
+        mod_result: List[str] = []
         dr = int(number)
         current_dividend_for_print = dr 
         
@@ -179,7 +178,7 @@ def change_base(number_as_string_with_base: str, out_base: int) -> str:
             
         mod_result.reverse()
         print("Reverse digits")
-        final_reults = []
+        final_reults: List[str] = []
         if out_base == 16:
             for digi in mod_result:
                 final_reults.append(number_to_hex_letter(int(digi)))
