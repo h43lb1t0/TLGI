@@ -186,6 +186,8 @@ def change_base(number_as_string_with_base: str, out_base: int) -> str:
         else:
             final_reults = mod_result
         final_result_str = ''.join(final_reults)
+        if not final_result_str:
+            final_result_str = "0"
 
         if fraction_part:
             fraction_result = _fraction_part_decimal_to_n_base(int(fraction_part), out_base)
@@ -204,8 +206,11 @@ def change_base(number_as_string_with_base: str, out_base: int) -> str:
     else:
         print(f"\n--- Two-step conversion required: Base {input_base} -> Base 10 -> Base {out_base} ---")
         
-        number_decimal = _to_decimal(number, input_base)
-        return change_base(f"{number_decimal}_10", out_base)
+        num_decimal = _to_decimal(number, input_base)
+        if fraction_part:
+            fraction_decimal = _to_decimal(fraction_part, input_base, True)
+            num_decimal = num_decimal + fraction_decimal
+        return change_base(f"{num_decimal}_10", out_base)
 
     
 if __name__ == "__main__":
