@@ -1,4 +1,14 @@
-from nodes import AndNode, OrNode, NotNode, NandNode, NorNode, XorNode, XnorNode
+from nodes import (
+    AndNode,
+    OrNode,
+    NotNode,
+    NandNode,
+    NorNode,
+    XorNode,
+    XnorNode,
+    InputNode,
+    OutputNode,
+)
 
 
 class Level:
@@ -11,6 +21,9 @@ class Level:
         check_func,
         input_count=2,
         output_count=1,
+        expect_output_on=True,
+        hint=None,
+        output_labels=None,
     ):
         self.id = id
         self.title = title
@@ -19,6 +32,9 @@ class Level:
         self.check_func = check_func
         self.input_count = input_count
         self.output_count = output_count
+        self.expect_output_on = expect_output_on
+        self.hint = hint
+        self.output_labels = output_labels
 
 
 # --- Phase 1: Axioms ---
@@ -131,7 +147,8 @@ LEVELS = [
     Level(
         id=1,
         title="The Conjunction",
-        description="Goal: Activate output only when BOTH inputs are ON.\nNode: AND",
+        description="Goal: Activate output only when BOTH inputs are ON.",
+        hint="Node: AND",
         allowed_nodes=[AndNode],
         check_func=check_lvl_01,
         input_count=2,
@@ -139,7 +156,8 @@ LEVELS = [
     Level(
         id=2,
         title="The Disjunction",
-        description="Goal: Activate output if AT LEAST ONE input is ON.\nNode: OR",
+        description="Goal: Activate output if AT LEAST ONE input is ON.",
+        hint="Node: OR",
         allowed_nodes=[OrNode],
         check_func=check_lvl_02,
         input_count=2,
@@ -147,7 +165,8 @@ LEVELS = [
     Level(
         id=3,
         title="The Inverter",
-        description="Goal: Output ON when input is OFF.\nNode: NOT",
+        description="Goal: Output ON when input is OFF.",
+        hint="Node: NOT",
         allowed_nodes=[NotNode],
         check_func=check_lvl_03,
         input_count=1,
@@ -156,15 +175,18 @@ LEVELS = [
     Level(
         id=4,
         title="The NAND Gate",
-        description="Goal: Output OFF only when both inputs are ON.\nLogic: NOT( A AND B )",
+        description="Goal: Output OFF only when both inputs are ON.",
+        hint="Logic: NOT( A AND B )",
         allowed_nodes=[AndNode, OrNode, NotNode],  # "Composing negative conditions"
         check_func=check_lvl_04,
         input_count=2,
+        expect_output_on=False,
     ),
     Level(
         id=5,
         title="The NOR Gate",
-        description="Goal: Output ON only when both inputs are OFF.\nLogic: NOT( A OR B )",
+        description="Goal: Output ON only when both inputs are OFF.",
+        hint="Logic: NOT( A OR B )",
         allowed_nodes=[AndNode, OrNode, NotNode],
         check_func=check_lvl_05,
         input_count=2,
@@ -173,7 +195,8 @@ LEVELS = [
     Level(
         id=6,
         title="The XOR Gate",
-        description="Goal: Output ON if inputs are different.\nLogic: (A OR B) AND (A NAND B)\nInventory: Basic + NAND/NOR",
+        description="Goal: Output ON if inputs are different.\nInventory: Basic + NAND/NOR",
+        hint="Logic: (A OR B) AND (A NAND B)",
         allowed_nodes=[AndNode, OrNode, NotNode, NandNode, NorNode],
         check_func=check_lvl_06,
         input_count=2,
@@ -181,7 +204,8 @@ LEVELS = [
     Level(
         id=7,
         title="The XNOR Gate",
-        description="Goal: Output ON if inputs are identical.\nLogic: NOT( XOR(A, B) )",
+        description="Goal: Output ON if inputs are identical.",
+        hint="Logic: NOT( XOR(A, B) )",
         allowed_nodes=[AndNode, OrNode, NotNode, NandNode, NorNode, XorNode],
         check_func=check_lvl_07,
         input_count=2,
@@ -195,6 +219,9 @@ LEVELS = [
         check_func=check_lvl_08,
         input_count=2,
         output_count=2,
+        output_labels=["Sum", "Carry"],
+        # Hint Added: Standard Half Adder logic
+        hint="Sum: A XOR B\nCarry: A AND B",
     ),
     Level(
         id=9,
@@ -204,6 +231,9 @@ LEVELS = [
         check_func=check_lvl_09,
         input_count=3,
         output_count=2,
+        output_labels=["Sum", "Cout"],
+        # Hint Added: Logic for cascading carry
+        hint="Sum: A XOR B XOR Cin\nCout: (A AND B) OR (Cin AND (A XOR B))",
     ),
     Level(
         id=10,
@@ -213,12 +243,16 @@ LEVELS = [
         check_func=check_lvl_10,
         input_count=4,
         output_count=3,
+        output_labels=["S0", "S1", "Cout"],
+        # Hint Added: How to chain the previous two levels
+        hint="Bit 0: Half Adder(A0, B0)\nBit 1: Full Adder(A1, B1, CarryFrom0)",
     ),
     # Phase 5
     Level(
         id=11,
         title="The Universal Spark",
-        description="Goal: Build a NOT gate using ONLY NAND.\nLogic: NAND(A, A)",
+        description="Goal: Build a NOT gate using ONLY NAND.",
+        hint="Logic: NAND(A, A)",
         allowed_nodes=[NandNode],
         check_func=check_lvl_11,
         input_count=1,
@@ -226,7 +260,8 @@ LEVELS = [
     Level(
         id=12,
         title="Reconstructing AND",
-        description="Goal: Build an AND gate using NAND and NOT.\nLogic: NOT( NAND(A, B) )",
+        description="Goal: Build an AND gate using NAND and NOT.",
+        hint="Logic: NOT( NAND(A, B) )",
         allowed_nodes=[NandNode, NotNode],
         check_func=check_lvl_12,
         input_count=2,
@@ -234,7 +269,8 @@ LEVELS = [
     Level(
         id=13,
         title="Reconstructing OR",
-        description="Goal: Build an OR gate using NAND and NOT.\nLogic: NAND( NOT(A), NOT(B) )",
+        description="Goal: Build an OR gate using NAND and NOT.",
+        hint="Logic: NAND( NOT(A), NOT(B) )",
         allowed_nodes=[NandNode, NotNode],
         check_func=check_lvl_13,
         input_count=2,
@@ -247,5 +283,27 @@ LEVELS = [
         allowed_nodes=[AndNode, OrNode, NotNode, NandNode, NorNode, XorNode, XnorNode],
         check_func=check_lvl_14,
         input_count=3,
+        # Hint Added: Selecting pathways based on negation
+        hint="Logic: (A AND NOT Sel) OR (B AND Sel)",
     ),
 ]
+
+PLAYGROUND_LEVEL = Level(
+    id=0,
+    title="Playground",
+    description="Free sandbox mode.\nNo goals, just logic.",
+    allowed_nodes=[
+        InputNode,
+        OutputNode,
+        AndNode,
+        OrNode,
+        NotNode,
+        NandNode,
+        NorNode,
+        XorNode,
+        XnorNode,
+    ],
+    check_func=None,
+    input_count=0,
+    output_count=0,
+)

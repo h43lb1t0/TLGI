@@ -203,6 +203,10 @@ class Game:
             )
 
     def save_current_level_solution(self):
+        # Don't save playground state
+        if self.current_level_idx == -1:
+            return
+
         level = self.get_current_level()
         if not level:
             return
@@ -248,6 +252,8 @@ class Game:
         self.save_progress()
 
     def get_current_level(self):
+        if self.current_level_idx == -1:
+            return levels.PLAYGROUND_LEVEL
         if 0 <= self.current_level_idx < len(levels.LEVELS):
             return levels.LEVELS[self.current_level_idx]
         return None
@@ -273,7 +279,12 @@ class Game:
 
         # Quit
         self.buttons.append(
-            Button(cx - 100, cy + 90, 200, 50, "Quit", self.action_quit)
+            Button(cx - 100, cy + 160, 200, 50, "Quit", self.action_quit)
+        )
+
+        # Playground
+        self.buttons.append(
+            Button(cx - 100, cy + 90, 200, 50, "Playground", self.action_playground)
         )
 
     def action_play_latest(self):
@@ -287,6 +298,10 @@ class Game:
 
     def action_quit(self):
         self.running = False
+
+    def action_playground(self):
+        self.current_level_idx = -1
+        self.start_level()
 
     # --- Level Select Methods ---
     def setup_level_select(self):
@@ -340,6 +355,7 @@ class Game:
         self.simulating = False
         self.nodes.clear()
         self.message = ""
+        self.show_hint = False
 
         level = self.get_current_level()
         if not level:
@@ -350,7 +366,7 @@ class Game:
         spacing = 150
         inputs = []
         for i in range(level.input_count):
-            node = InputNode(100, start_y + i * spacing)
+            node = InputNode(250, start_y + i * spacing)
             node.title = f"In {chr(65 + i)}"
             inputs.append(node)
             self.nodes.append(node)
@@ -359,7 +375,9 @@ class Game:
         outputs = []
         for i in range(level.output_count):
             node = OutputNode(1000, 300 + i * 150)
-            if level.output_count > 1:
+            if level.output_labels and i < len(level.output_labels):
+                node.title = level.output_labels[i]
+            elif level.output_count > 1:
                 node.title = f"Out {i}"
             outputs.append(node)
             self.nodes.append(node)
@@ -392,6 +410,10 @@ class Game:
 
         self.update_game_buttons()
 
+    def toggle_hint(self):
+        self.show_hint = not self.show_hint
+        self.update_game_buttons()
+
     def update_game_buttons(self):
         self.buttons = []
         y_offset = 20
@@ -403,6 +425,22 @@ class Game:
         # Menu/Back
         self.buttons.append(Button(20, y_offset, 140, 40, "Menu", self.setup_menu))
         y_offset += 50
+
+        # Hint Button
+        if level.hint:
+            hint_text = "Hide Hint" if self.show_hint else "Show Hint"
+            self.buttons.append(
+                Button(
+                    20,
+                    y_offset,
+                    140,
+                    40,
+                    hint_text,
+                    self.toggle_hint,
+                    color=(100, 100, 50),
+                )
+            )
+            y_offset += 50
 
         # Node spawning buttons
         for node_cls in level.allowed_nodes:
@@ -446,8 +484,10 @@ class Game:
             )
         )
 
-        next_disabled = (self.current_level_idx >= self.max_unlocked_idx) or (
-            self.current_level_idx >= len(levels.LEVELS) - 1
+        next_disabled = (
+            (self.current_level_idx >= self.max_unlocked_idx)
+            or (self.current_level_idx >= len(levels.LEVELS) - 1)
+            or (self.current_level_idx == -1)
         )
         self.buttons.append(
             Button(100, h - 60, 60, 40, ">", self.next_level, disabled=next_disabled)
@@ -505,46 +545,6 @@ class Game:
 
         # 0. Capture Current State
         current_input_values = [n.value for n in input_nodes]
-
-        # 1. Verify Current State
-        # Run simulation for current state
-        for _ in range(50):
-            for node in self.nodes:
-                node.process_logic()
-
-        actual_current_outputs = [n.value for n in output_nodes]
-        expected_current = level.check_func(current_input_values)
-
-        if not isinstance(expected_current, (list, tuple)):
-            expected_current = [expected_current]
-        else:
-            expected_current = list(expected_current)
-
-        if actual_current_outputs != expected_current:
-            self.message = "Inputs are wrongly set."
-            self.message_color = (255, 100, 100)
-            # Restore state before returning
-            for i, val in enumerate(current_input_values):
-                input_nodes[i].value = val
-            # Allow logic to settle back to original state
-            for _ in range(50):
-                for node in self.nodes:
-                    node.process_logic()
-            return
-
-        # Check if expected output is "active" (at least one True)
-        # This forces the user to find an input combination that turns the circuit ON.
-        if not any(expected_current):
-            self.message = "Inputs are wrongly set."
-            self.message_color = (255, 100, 100)
-            # Restore state before returning
-            for i, val in enumerate(current_input_values):
-                input_nodes[i].value = val
-            # Allow logic to settle back to original state
-            for _ in range(50):
-                for node in self.nodes:
-                    node.process_logic()
-            return
 
         # 2. Run Exhaustive Verification
         combinations = list(itertools.product([False, True], repeat=level.input_count))
@@ -758,6 +758,15 @@ class Game:
                 desc_surf = self.font.render(line, True, (200, 200, 200))
                 self.screen.blit(desc_surf, (200, dy))
                 dy += 30
+
+            # Draw Hint
+            if self.show_hint and level.hint:
+                dy += 10
+                hint_lines = level.hint.split("\n")
+                for line in hint_lines:
+                    hint_surf = self.font.render(line, True, (255, 255, 100))
+                    self.screen.blit(hint_surf, (200, dy))
+                    dy += 30
 
         # Links
         for node in self.nodes:
