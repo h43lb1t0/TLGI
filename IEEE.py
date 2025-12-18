@@ -1,7 +1,6 @@
 from enum import Enum, auto
 from typing import Dict, Tuple
 from math import inf, nan, isnan, copysign
-import numbers
 from NumerBaseChangeCalculator import change_base
 
 
